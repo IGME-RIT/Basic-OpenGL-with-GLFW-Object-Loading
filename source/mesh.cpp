@@ -1,6 +1,6 @@
 /*
-Title: DMaterials
-File Name: shape.cpp
+Title: Object Loading
+File Name: mesh.cpp
 Copyright ? 2016
 Author: David Erbelding
 Written under the supervision of David I. Schwartz, Ph.D., and

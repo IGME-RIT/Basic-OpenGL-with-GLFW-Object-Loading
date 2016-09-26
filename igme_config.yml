@@ -1,14 +1,16 @@
 series: Basic OpenGL with GLFW
-title: Materials
+title: Object Loading
 author:
   name: David Erbelding
   email: daviderbelding@gmail.com
   github: https://github.com/Erbelding
-description: Use materials to make drawing easier.
+description: Load mesh information from an obj file.
 language: C++
 tags:
   - Graphics
 extra_resources:
 connections:
   - series: Basic OpenGL with GLFW
-    title: Texturing a Cube
+    title: Materials
+  - series: Basic OpenGL with GLFW
+    title: Basic Lighting

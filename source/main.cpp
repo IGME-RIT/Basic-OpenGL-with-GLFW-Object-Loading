@@ -1,5 +1,5 @@
 ﻿/*
-Title: Materials
+Title: Object Loading
 File Name: main.cpp
 Copyright � 2016
 Author: David Erbelding

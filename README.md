@@ -1,13 +1,11 @@
-# Basic OpenGL with GLFW: Texturing a Cube
+# Basic OpenGL with GLFW: Object Loading
 
 This program introduces basic concepts involved in writing an OpenGL program.
 
 # About
 
-Materials are commonly used within graphics programs to manage data associated with rendering.
-With materials it can become easier to draw many different objects.
-This example demonstrates a basic implementation of a material class that owns a shader program and textures.
-This example also demonstrates the use of reference counting to keep track of textures and shaders.
+Wavefront .obj files are commonly used to store mesh information for models used in games.
+This example demonstrates a basic algorithm for read an object file, and converting it to a graphics friendly data format.
 
 # Setup
 
