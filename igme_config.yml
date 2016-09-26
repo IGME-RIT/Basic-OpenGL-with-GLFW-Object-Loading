@@ -1,0 +1,14 @@
+series: Basic OpenGL with GLFW
+title: Materials
+author:
+  name: David Erbelding
+  email: daviderbelding@gmail.com
+  github: https://github.com/Erbelding
+description: Use materials to make drawing easier.
+language: C++
+tags:
+  - Graphics
+extra_resources:
+connections:
+  - series: Basic OpenGL with GLFW
+    title: Texturing a Cube
