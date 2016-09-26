@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 	glfwInit();
 
 	// Initialize window
-	GLFWwindow* window = glfwCreateWindow(viewportDimensions.x, viewportDimensions.y, "Materials", nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(viewportDimensions.x, viewportDimensions.y, "Not a cube", nullptr, nullptr);
 	glfwMakeContextCurrent(window);
 
 	// Set window callbacks
@@ -74,11 +74,13 @@ int main(int argc, char **argv)
 	// Initialize glew
 	glewInit();
 
+    // Instead of coding our vertices, we just load them in from this file in the mesh constructor!
     Mesh* model = new Mesh("../assets/ironbuckler.obj");
 
     // The transform being used to draw our second shape.
     Transform3D transform;
     transform.SetPosition(glm::vec3(0, 0, -2));
+    transform.RotateX(1.5);
 
 
     // Make a first person controller for the camera.
@@ -130,7 +132,7 @@ int main(int argc, char **argv)
         // View matrix.
         glm::mat4 view = controller.GetTransform().GetInverseMatrix();
         // Projection matrix.
-        glm::mat4 projection = glm::perspective(.75f, viewportDimensions.x / viewportDimensions.y, .01f, 100.f);
+        glm::mat4 projection = glm::perspective(.75f, viewportDimensions.x / viewportDimensions.y, .1f, 100.f);
         // Compose view and projection.
         glm::mat4 viewProjection = projection * view;
 

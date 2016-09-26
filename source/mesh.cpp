@@ -46,64 +46,108 @@ Mesh::Mesh(std::vector<Vertex3dUVNormal> vertices, std::vector<unsigned int> ind
 Mesh::Mesh(std::string filePath)
 {
 
+    // before we do anything, lets first check if the file even exists:
     std::ifstream file(filePath);
 
-    // Check if the file exists
     if (!file.good())
     {
-        // If we encounter an error, print a message and return false.
+        // If we encounter an error, print a message and return.
         std::cout << "Can't read file: " << filePath << std::endl;
         return;
     }
 
-    // These will contain our vertex data
+    // These are temporary, and will contain our vertex data while we read from the file
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec2> uvs;
     std::vector<glm::vec3> normals;
 
-    // Now we have to process the string . . .
-    std::ifstream  fin(filePath);
-    std::string    line;
 
-    // Loop over all lines
-    while (std::getline(fin, line))
+    // Now we have to process the string . . .
+    std::string line;
+
+    // Loop over every line in the file, storing it in the string 'line'
+    while (std::getline(file, line))
     {
-        // vertex positions
-        if (strncmp("v ", &line[0], 2) == 0)
+        /*
+
+        obj files have a ton of features, but we'll only be using the core set here
+
+        =================================================
+        Lines starting with just 'v' are vertex positions. They might look like this:
+        v 1.0 -2.5345 3.141
+        The positions are stored as floating point values seperated by spaces
+        =================================================
+        vt is for uvs aka texture coordinates:
+        vt 0.12 0.87
+        Remember they only have an x and y value
+        =================================================
+        vn is for our normals:
+        vn -0.473 0.1201 0.7778
+        =================================================
+        f indicates faces, they are the most complex and look something like this:
+        f 100/1/1 101/1/1 102/3/2 103/3/2
+
+        each set of values  here ex 100/1/1, is a vertex
+        the first (100) is the index of the vertex position in the list of vertices as they appear in the file
+        the second (1) is the index of the uv coordinates in the list of uvs the same way
+        and the third (1) is the index of our normals in the corresponding list of normals
+        
+        You'll notice that there are 4 of these groupings.
+        That is because those 4 vertices form a quad.
+        Some of them will also appear in groups of 3, as tris, so we'll have to account for both cases.
+
+        Also, since obj files are ordered differently than how we use them, we have to reorganize them.
+        */
+
+        
+        // Let's get started:
+
+
+        // check if it's a vertex position
+        // strncmp checks if the first n characters of these strings match (n is 2 here)
+        if (strncmp("v ", &line[0], 2) == 0) 
         {
-            strtok(&line[0], " ");
-            float x = std::stof(strtok(0, " "));
-            float y = std::stof(strtok(0, " "));
-            float z = std::stof(strtok(0, " "));
-            vertices.push_back(glm::vec3(x, y, z));
+            // strtok takes in a string and a delimiter, storing the string internally.
+            // it also returns a pointer to the first character of the first word (split by the character given, " ").
+            strtok(&line[0], " "); 
+            // every time after the first, strtok returns the next word (splitting with the given character) until it runs out of words.
+            float x = std::stof(strtok(NULL, " "));
+            float y = std::stof(strtok(NULL, " "));
+            float z = std::stof(strtok(NULL, " "));
+            vertices.push_back(glm::vec3(x, y, z)); // make a vector from the given values and store it.
         }
         // texture coordinates
         else if (strncmp("vt", &line[0], 2) == 0)
         {
+            // same as above, but only 2 floats per value
             strtok(&line[0], " ");
-            float u = std::stof(strtok(0, " "));
-            float v = std::stof(strtok(0, " "));
+            float u = std::stof(strtok(NULL, " "));
+            float v = std::stof(strtok(NULL, " "));
             uvs.push_back(glm::vec2(u, v));
         }
         // vertex normals
         else if (strncmp("vn", &line[0], 2) == 0)
         {
+            // one more time for normals!
             strtok(&line[0], " ");
-            float x = std::stof(strtok(0, " "));
-            float y = std::stof(strtok(0, " "));
-            float z = std::stof(strtok(0, " "));
+            float x = std::stof(strtok(NULL, " "));
+            float y = std::stof(strtok(NULL, " "));
+            float z = std::stof(strtok(NULL, " "));
             normals.push_back(glm::vec3(x, y, z));
         }
         // faces (these should be last in the file, so we can just interpret them immediately)
         else if (strncmp("f", &line[0], 1) == 0)
         {
-            // make some faces :P
-            std::vector<int> face;
+            // keep track of the indices from our vector/uv/normal buffer for this face
+            std::vector<unsigned int> faceIndices;
 
+            // this will store the vertices as we read over them.
             char* token = strtok(&line[0], " ");
-            while ((token = strtok(0, "/")) != 0)
+
+            // loop over the vertices until we get NULL (what strtok returns at the end of the line)
+            while ((token = strtok(0, "/")) != NULL)
             {
-                // split up data (important, obj file indexing starts at 1, so we have to subtract 1 here or bad things happen)
+                // split up index data (important, obj file indexing starts at 1, so we have to subtract 1 here or bad things will happen)
                 int i = std::stoi(token) - 1;
                 glm::vec3 vp = vertices[i];
 
@@ -115,52 +159,57 @@ Mesh::Mesh(std::string filePath)
                 int k = std::stoi(token) - 1;
                 glm::vec3 vn = normals[k];
 
-                bool newVertex = false;
+                // Unfortunately obj files store vertex data in seperate groups.
+                // We could use the data that way, but we would repeat tons of vertices, and be unable to use an index buffer.
+                // Instead we're going to compare vertices to avoid redundant values.
 
                 // does this vertex exist already?
+                bool newVertex = false;
+
+                // loop over all existing vertices
                 for (int i = 0; i < m_vertices.size(); i++)
                 {
                     Vertex3dUVNormal other = m_vertices[i];
-                    // if match found
+                    // if match found...
                     if (vp == other.m_position &&
                         vt == other.m_texCoord &&
                         vn == other.m_normal)
                     {
-                        // reuse the index for this face and stop iterating
-                        face.push_back(i);
+                        //...reuse the index for this face and stop iterating
+                        faceIndices.push_back(i);
                         newVertex = true;
                         break;
                     }
                 }
 
-                // if not a new vertex, create and add it
+                // if a new vertex, create and add it to the collection
                 if (!newVertex)
                 {
-                    // the index for this vertex will be at the index at the end of the vector
-                    face.push_back(m_vertices.size());
+                    // the index for this vertex will be at the end of the collection
+                    faceIndices.push_back(m_vertices.size());
                     m_vertices.push_back(Vertex3dUVNormal(vp, vt, vn));
                 }
             }
 
-            // face now has indices
+            // now that our face is using the final indices, we need to add it to our index buffer
 
             // add the first 3 indices of the face to our index collection to form a triangle
             for (int i = 0; i < 3; i++)
             {
-                m_indices.push_back(face[i]);
+                m_indices.push_back(faceIndices[i]);
             }
-            // the face is a quad, add the last 3 vertices in reverse order of appearance
-            if (face.size() == 4)
+            // the face is a quad, add 3 more vertices to form a triangle
+            if (faceIndices.size() == 4)
             {
-                m_indices.push_back(face[0]);
-                m_indices.push_back(face[2]);
-                m_indices.push_back(face[3]);
+                m_indices.push_back(faceIndices[0]);
+                m_indices.push_back(faceIndices[2]);
+                m_indices.push_back(faceIndices[3]);
             }
 
 
             // we're done here
         }
-        // other
+        // other line, just print it out for debug purposes
         else 
         {
             std::cout << line << std::endl;
@@ -169,7 +218,7 @@ Mesh::Mesh(std::string filePath)
 
 
     // After all of that nonsense close the file
-    fin.close();
+    file.close();
 
     // create buffers for opengl just like normal
 
